@@ -18,7 +18,8 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // The gas lane to use, which specifies the maximum gas price to bump to.
     // For a list of available gas lanes on each network,
     // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
+    bytes32 keyHash =
+        0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
 
     // Depends on the number of requested values that you want sent to the
     // fulfillRandomWords() function. Storing each word costs about 20,000 gas,
@@ -33,7 +34,7 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
 
     // For this example, retrieve 2 random values in one request.
     // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
-    uint32 numWords =  2;
+    uint32 numWords = 1;
 
     uint256[] public s_randomWords;
     uint256 public s_requestId;
@@ -46,9 +47,11 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // Some choice for storage of lottery player address
     // https://ethereum.stackexchange.com/questions/13167/are-there-well-solved-and-simple-storage-patterns-for-solidity
     // TODO: Review needed
-    address[] lotteryPlayers;
+    address[] public lotteryPlayers;
 
-    constructor (uint64 subscriptionId, uint256 date) VRFConsumerBaseV2(vrfCoordinator){
+    constructor(uint64 subscriptionId, uint256 date)
+        VRFConsumerBaseV2(vrfCoordinator) NFTCollection()
+    {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         s_subscriptionId = subscriptionId;
         ballotDate = date;
@@ -70,25 +73,21 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // Select winner
     function drawRaffle() public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isBallotTime());
-        require(lotteryPlayers.length >= minNumPlayers);
-        // TODO: Integrate VRF here
-        address winner = lotteryPlayers[lotteryPlayers.length - 1]; // hardcoded to last player to enter
+        uint256 totalPlayers = lotteryPlayers.length;
+        require(totalPlayers >= minNumPlayers);
+        s_requestId = COORDINATOR.requestRandomWords(
+            keyHash,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            numWords
+        );
+        // Modulus to ensure random within range 0..N-1 where N is total number of player
+        address winner = lotteryPlayers[s_randomWords[0] % totalPlayers];
         _grantRole(MINTER_ROLE, winner);
         // What's next? Only allow 1 specific tokenURI ?
     }
 
-    // Assumes the subscription is funded sufficiently.
-    function requestRandomWords() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Will revert if subscription is not set and funded.
-        s_requestId = COORDINATOR.requestRandomWords(
-        keyHash,
-        s_subscriptionId,
-        requestConfirmations,
-        callbackGasLimit,
-        numWords
-        );
-    }
-    
     function fulfillRandomWords(
         uint256, /* requestId */
         uint256[] memory randomWords
