@@ -32,15 +32,13 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // The default is 3, but you can set this higher.
     uint16 requestConfirmations = 3;
 
-    // For this example, retrieve 2 random values in one request.
     // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
     uint32 numWords = 1;
 
     uint256[] public s_randomWords;
     uint256 public s_requestId;
-    address s_owner;
 
-    uint256 public cost = 0.01 ether;
+    uint256 public cost = 0.001 ether;
     uint256 public minNumPlayers = 2;
     uint256 public ballotDate;
 
@@ -93,5 +91,17 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
         uint256[] memory randomWords
     ) internal override {
         s_randomWords = randomWords;
+    }
+
+    function setBallotDate(uint256 date) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ballotDate = date;
+    }
+
+    function setCost(uint256 raffleCost) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        cost = raffleCost;
+    }
+
+    function setMinNumPlayers(uint256 num) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        minNumPlayers = num;
     }
 }
