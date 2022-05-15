@@ -47,6 +47,8 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // TODO: Review needed
     address[] public lotteryPlayers;
 
+    event WinnerSelected(address winner);
+
     constructor(uint64 subscriptionId, uint256 date)
         VRFConsumerBaseV2(vrfCoordinator) NFTCollection()
     {
@@ -71,8 +73,7 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // Select winner
     function drawRaffle() public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isBallotTime());
-        uint256 totalPlayers = lotteryPlayers.length;
-        require(totalPlayers >= minNumPlayers);
+        require(lotteryPlayers.length >= minNumPlayers);
         s_requestId = COORDINATOR.requestRandomWords(
             keyHash,
             s_subscriptionId,
@@ -80,10 +81,6 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
             callbackGasLimit,
             numWords
         );
-        // Modulus to ensure random within range 0..N-1 where N is total number of player
-        address winner = lotteryPlayers[s_randomWords[0] % totalPlayers];
-        _grantRole(MINTER_ROLE, winner);
-        // What's next? Only allow 1 specific tokenURI ?
     }
 
     function fulfillRandomWords(
@@ -91,6 +88,11 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
         uint256[] memory randomWords
     ) internal override {
         s_randomWords = randomWords;
+        // Modulus to ensure random within range 0..N-1 where N is total number of player
+        address winner = lotteryPlayers[s_randomWords[0] % lotteryPlayers.length];
+        _grantRole(MINTER_ROLE, winner);
+        emit WinnerSelected(winner);
+        // What's next? Only allow 1 specific tokenURI ?
     }
 
     function setBallotDate(uint256 date) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -103,5 +105,9 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
 
     function setMinNumPlayers(uint256 num) public onlyRole(DEFAULT_ADMIN_ROLE) {
         minNumPlayers = num;
+    }
+
+    function getTotalPlayers() public view returns (uint256) {
+        return lotteryPlayers.length;
     }
 }
