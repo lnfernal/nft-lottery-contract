@@ -40,7 +40,7 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
 
     uint256 public cost = 0.001 ether;
     uint256 public minNumPlayers = 2;
-    uint256 public ballotDate;
+    uint256 public ballotTime;
 
     // Some choice for storage of lottery player address
     // https://ethereum.stackexchange.com/questions/13167/are-there-well-solved-and-simple-storage-patterns-for-solidity
@@ -54,11 +54,11 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         s_subscriptionId = subscriptionId;
-        ballotDate = date;
+        ballotTime = date;
     }
 
     function isBallotTime() public view returns (bool) {
-        return (block.timestamp >= ballotDate);
+        return (block.timestamp >= ballotTime);
     }
 
     // Pay to enter raffle
@@ -95,8 +95,8 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
         // What's next? Only allow 1 specific tokenURI ?
     }
 
-    function setBallotDate(uint256 date) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        ballotDate = date;
+    function setBallotTime(uint256 date) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ballotTime = date;
     }
 
     function setCost(uint256 raffleCost) public onlyRole(DEFAULT_ADMIN_ROLE) {
