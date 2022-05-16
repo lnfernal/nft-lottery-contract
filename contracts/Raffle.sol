@@ -11,15 +11,10 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     // Your subscription ID.
     uint64 s_subscriptionId;
 
-    // Rinkeby coordinator. For other networks,
-    // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
-
     // The gas lane to use, which specifies the maximum gas price to bump to.
     // For a list of available gas lanes on each network,
     // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    bytes32 keyHash =
-        0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
+    bytes32 s_keyHash;
 
     // Depends on the number of requested values that you want sent to the
     // fulfillRandomWords() function. Storing each word costs about 20,000 gas,
@@ -49,11 +44,16 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
 
     event WinnerSelected(address winner);
 
-    constructor(uint64 subscriptionId, uint256 date)
-        VRFConsumerBaseV2(vrfCoordinator) NFTCollection()
+    constructor(uint64 subscriptionId, 
+                address vrfCoordinator,
+                bytes32 keyHash,
+                uint256 date)
+                VRFConsumerBaseV2(vrfCoordinator) 
+                NFTCollection()
     {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         s_subscriptionId = subscriptionId;
+        s_keyHash = keyHash;
         ballotTime = date;
     }
 
@@ -75,7 +75,7 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
         require(isBallotTime());
         require(lotteryPlayers.length >= minNumPlayers);
         s_requestId = COORDINATOR.requestRandomWords(
-            keyHash,
+            s_keyHash,
             s_subscriptionId,
             requestConfirmations,
             callbackGasLimit,
@@ -87,6 +87,7 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
         uint256, /* requestId */
         uint256[] memory randomWords
     ) internal override {
+        // TODO: Match request ID
         s_randomWords = randomWords;
         // Modulus to ensure random within range 0..N-1 where N is total number of player
         address winner = lotteryPlayers[s_randomWords[0] % lotteryPlayers.length];
