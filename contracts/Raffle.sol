@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "./NFTCollection.sol";
 
 contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     VRFCoordinatorV2Interface COORDINATOR;
+    LinkTokenInterface immutable LINKTOKEN;
+
 
     // Your subscription ID.
     uint64 s_subscriptionId;
@@ -47,11 +50,14 @@ contract Raffle is NFTCollection, VRFConsumerBaseV2 {
     constructor(uint64 subscriptionId, 
                 address vrfCoordinator,
                 bytes32 keyHash,
-                uint256 date)
+                uint256 date,
+                address link
+                )
                 VRFConsumerBaseV2(vrfCoordinator) 
                 NFTCollection()
     {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
+        LINKTOKEN = LinkTokenInterface(link);
         s_subscriptionId = subscriptionId;
         s_keyHash = keyHash;
         ballotTime = date;
